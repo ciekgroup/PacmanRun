@@ -3,6 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class DetectRoads : MonoBehaviour {
+    //Original script by CIEK group Omaha.
+    //Last edit: 1.15.2017
+    //See commit log
+    //Created by Kaleb Sagehorn as part of jobs 08-13
+    
+    //This class initializes most important things involving level cration, including 
+    //generating paths, finding points that are roads based on texture pixels, and 
+    //storing that information in arrays to be used by other scripts.
+    //Parts of this are called in GoogleMaps only to keep flow. This might be fixed later,
+    //but it is perfectly readable as is. 
+    //To victory, comrads!
+    //-- Kaleb Sagehorn, CIEK group
+
+
+
     int totalpixels;
     Texture2D tex;
     int[,] points;
@@ -16,8 +31,11 @@ public class DetectRoads : MonoBehaviour {
     public GameObject debugSphere;
     Coordtrans coordtrans;
     GoogleMap googlemap;
+    Vector2[] realpoints;
+    int realpointCount = 0;
     private void Start()
     {
+        realpoints = new Vector2[5000];
         totalpixels = Screen.width * Screen.height;
         coordtrans = GetComponent<Coordtrans>();
         googlemap = GetComponent<GoogleMap>();
@@ -58,7 +76,8 @@ public class DetectRoads : MonoBehaviour {
                                     else
                                     {
                                         nodeinregion = true;
-                                        Debug.Log("Node in region");
+                                        Debug.Log("Node in region");//Called far too little. Can't figure out why this is doing this.
+                                        //Fix this bug, please. It might mess with pathing code later.
                                     }
                                 }
                                     if (nodeinregion == false)
@@ -66,7 +85,7 @@ public class DetectRoads : MonoBehaviour {
                                     nodes[nodecounter] = new Vector3(x, y, -2.5f);
                                     alreadynode = true;
                                     Debug.Log(coordtrans.TexPixeltoWorldVector(x, y, tex).x + "," + coordtrans.TexPixeltoWorldVector(x, y, tex).y);
-                                    Instantiate(debugSphere, coordtrans.TexPixeltoWorldVector(x, y, tex), Quaternion.identity);
+                                    Instantiate(debugSphere, coordtrans.TexPixeltoWorldVector(x, y, tex), Quaternion.identity);// For debugging. Delete when not needed IE stable code is introduced.
                                 }
                                
                             }//right
@@ -144,7 +163,7 @@ public class DetectRoads : MonoBehaviour {
                 }//if ponts(x,y) = 2
             }//ScreenHeight
         }//ScreenWidth
-        
+        PointGridWorldGen(points);
     }
     public void PointGen ()//called from googlemaps, third script
     {
@@ -172,6 +191,8 @@ public class DetectRoads : MonoBehaviour {
                         {
                             points[x, y] = 2;
                             counter += 1;
+                            realpoints[realpointCount] = new Vector2(x, y);
+                            realpointCount++;
                         }//5th pixel check 
                         else
                         {
@@ -191,12 +212,15 @@ public class DetectRoads : MonoBehaviour {
         EvaluatePoints(points,nodes,nodecounter);
         
     }//End Pointsgen
-    void CutPoints(int[,] points)
+    void PointGridWorldGen(int[,] points)
     {
-        for(int x = 0; x < Screen.width; x++)
+        realpointCount = 0;
+        foreach(Vector2 point in realpoints)
         {
-
+            realpoints[realpointCount] = coordtrans.TexPixeltoWorldVector(point.x, point.y, tex); // convert to world space
+            realpointCount++;
         }
+        Debug.Log(realpoints.Length);
     }
 
     // Update is called once per frame
